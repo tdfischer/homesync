@@ -77,4 +77,19 @@ class GitInterface:
     git = self.open("commit -m '%s' -- %s"%(message,path))
     git.close()
     self.lock.release()
-
+  
+  def revisionList(self, path):
+    self.lock.acquire()
+    logging.debug("Requesting revision history of %s",path)
+    git = self.open("rev-list --timestamp HEAD %s"%(path))
+    ret = []
+    while(True):
+      commit = git.readline().strip().split()
+      if (commit == []):
+        break
+      commit[0] = int(commit[0])
+      #ret.append(commit)
+      ret.append([commit[1],commit[0]])
+    git.close()
+    self.lock.release()
+    return ret

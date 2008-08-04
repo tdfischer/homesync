@@ -6,6 +6,7 @@ import threading
 
 from PyQt4 import QtCore
 from dbus.mainloop.qt import DBusQtMainLoop
+#from dbus.bus import BusConnection
 import dbus.service
 
 from GitInterface import GitInterface
@@ -29,7 +30,7 @@ class SyncDaemon(dbus.service.Object):
     logging.basicConfig(level=logging.DEBUG)
     logging.debug("Created SyncDaemon")
     logging.debug("Attaching to D-BUS")
-    self.name = dbus.service.BusName("net.wm161.HomeSync")
+    self.name = dbus.service.BusName("net.wm161.HomeSync",bus=dbus.SessionBus())
     
     home = os.environ["HOME"]
     os.chdir(home)
@@ -52,7 +53,8 @@ class SyncDaemon(dbus.service.Object):
     self.watcher = SyncWatcher(home)
     QtCore.QObject.connect(self.watcher,QtCore.SIGNAL("directoryChanged(QString)"),self.dirUpdate)
     
-    dbus.service.Object.__init__(self, object_path="/net/wm161/HomeSync", conn=dbus.SessionBus(), bus_name=self.name)
+    dbus.service.Object.__init__(self, object_path="/Server", conn=dbus.SessionBus(), bus_name=self.name)
+    self.Ready()
     logging.debug("Ready.")
   
   def dirUpdate(self,path):
@@ -74,7 +76,12 @@ class SyncDaemon(dbus.service.Object):
   def ExitDaemon(self):
     logging.info("Exiting")
     QtCore.QCoreApplication.exit()
-    
+  
+  @dbus.service.method(dbus_interface='net.wm161.HomeSync.Server', in_signature='s', out_signature="a(si)")
+  def FileRevisions(self,path):
+    logging.debug("Requesting revisions of %s"%(path))
+    return self.git.revisionList(path)
+  
   @dbus.service.signal(dbus_interface='net.wm161.HomeSync.Server')
   def Ready(self):
     pass
