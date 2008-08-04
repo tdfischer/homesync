@@ -13,6 +13,14 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>27</y>
+     <width>749</width>
+     <height>575</height>
+    </rect>
+   </property>
    <layout class="QVBoxLayout" >
     <item>
      <widget class="QSplitter" name="splitter" >
@@ -31,7 +39,7 @@
             <widget class="QLineEdit" name="lineEdit" />
            </item>
            <item>
-            <widget class="QColumnView" name="columnView" />
+            <widget class="QColumnView" name="fileView" />
            </item>
           </layout>
          </widget>
@@ -39,9 +47,17 @@
         <item>
          <widget class="QTabWidget" name="tabWidget" >
           <property name="currentIndex" >
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="tab" >
+           <property name="geometry" >
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>493</width>
+             <height>240</height>
+            </rect>
+           </property>
            <attribute name="title" >
             <string>Status</string>
            </attribute>
@@ -63,7 +79,7 @@
                 <property name="orientation" >
                  <enum>Qt::Vertical</enum>
                 </property>
-                <property name="sizeHint" >
+                <property name="sizeHint" stdset="0" >
                  <size>
                   <width>20</width>
                   <height>40</height>
@@ -149,7 +165,7 @@
                   <property name="orientation" >
                    <enum>Qt::Vertical</enum>
                   </property>
-                  <property name="sizeHint" >
+                  <property name="sizeHint" stdset="0" >
                    <size>
                     <width>20</width>
                     <height>71</height>
@@ -164,6 +180,14 @@
            </layout>
           </widget>
           <widget class="QWidget" name="tab_2" >
+           <property name="geometry" >
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>493</width>
+             <height>240</height>
+            </rect>
+           </property>
            <attribute name="title" >
             <string>History</string>
            </attribute>
@@ -193,8 +217,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>151</width>
-          <height>445</height>
+          <width>218</width>
+          <height>464</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -227,7 +251,7 @@
            <property name="orientation" >
             <enum>Qt::Vertical</enum>
            </property>
-           <property name="sizeHint" >
+           <property name="sizeHint" stdset="0" >
             <size>
              <width>133</width>
              <height>181</height>
@@ -242,8 +266,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>197</width>
-          <height>445</height>
+          <width>175</width>
+          <height>156</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -302,7 +326,7 @@
            <property name="orientation" >
             <enum>Qt::Vertical</enum>
            </property>
-           <property name="sizeHint" >
+           <property name="sizeHint" stdset="0" >
             <size>
              <width>20</width>
              <height>40</height>
@@ -317,8 +341,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>107</width>
-          <height>461</height>
+          <width>94</width>
+          <height>24</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -336,11 +360,20 @@
      <x>0</x>
      <y>0</y>
      <width>749</width>
+     <height>27</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>602</y>
+     <width>749</width>
      <height>24</height>
     </rect>
    </property>
   </widget>
-  <widget class="QStatusBar" name="statusbar" />
   <action name="actionSettings" >
    <property name="text" >
     <string>Settings</string>
