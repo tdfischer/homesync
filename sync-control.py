@@ -4,23 +4,36 @@ from Ui_MainWindow import Ui_MainWindow
 import os, sys
 from dbus.mainloop.qt import DBusQtMainLoop
 import dbus
+from datetime import datetime
 
 class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
   def __init__(self):
     QtGui.QMainWindow.__init__(self)
     self.setupUi(self)
-    self.connect(self.actionBackup_Now,QtCore.SIGNAL('triggered()'), self.showSettings)
+    #self.connect(self.actionBackup_Now,QtCore.SIGNAL('triggered()'), self.showSettings)
     bus = dbus.SessionBus()
     serverObj = bus.get_object('net.wm161.HomeSync', '/Server');
     self.server = dbus.Interface(serverObj, dbus_interface='net.wm161.HomeSync.Server')
     self.statusList = QtGui.QStringListModel(self)
     self.statusList.setStringList(self.server.ListFiles(2))
-    #for file in self.server.ListFiles(2):
-    #  self.statusList.append(file)
     self.fileView.setModel(self.statusList)
+    selection = self.fileView.selectionModel()
+    self.connect(selection, QtCore.SIGNAL('currentChanged(QModelIndex, QModelIndex)'), self.showDetails)
 
-  def showSettings(self):
-    print "Yep!"
+  def showDetails(self, current, previous):
+    revisions = self.server.FileRevisions(str(current.data().toString()))
+    stamp = datetime.fromtimestamp(revisions[0][1])
+    self.lbl_archiveStamp.setText(stamp.strftime('%c'))
+    self.lbl_archiveStamp.
+    revisionList = QtGui.QStringListModel(self)
+    strList = QtCore.QStringList();
+    now = datetime.now()
+    for rev in revisions:
+      stamp = datetime.fromtimestamp(rev[1])
+      #diff = now-stamp
+      strList.append(stamp.strftime('%c'))
+    revisionList.setStringList(strList)
+    self.revisionView.setModel(revisionList)
 
 if __name__ == "__main__":
   app = QtGui.QApplication(sys.argv)
