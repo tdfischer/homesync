@@ -71,10 +71,20 @@ class GitInterface:
     git.close()
     self.lock.release()
   
-  def commit(self, path, message):
+  def commit(self, message, **kwargs):
     self.lock.acquire()
     logging.debug("Commiting %s",message)
-    git = self.open("commit -m '%s' -- %s"%(message,path))
+    if ('path' in kwargs):
+      git = self.open("commit -m '%s' -- %s"%(message,kwargs['path']))
+    else:
+      git = self.open("commit -m '%s'"%(message))
+    git.close()
+    self.lock.release()
+
+  def compact(self):
+    self.lock.acquire()
+    logging.debug("Compressing git repo")
+    git = self.open("gc --aggressive")
     git.close()
     self.lock.release()
   
