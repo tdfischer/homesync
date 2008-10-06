@@ -24,7 +24,12 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
     revisions = self.server.FileRevisions(str(current.data().toString()))
     stamp = datetime.fromtimestamp(revisions[0][1])
     self.lbl_archiveStamp.setText(stamp.strftime('%c'))
-    self.lbl_archiveStamp.
+    if os.path.exists(str(current.data().toString())):
+      stamp = datetime.fromtimestamp(str(os.path.getmtime(current.data().toString())))
+      self.lbl_modstamp.setText(stamp.strftime('%c'))
+      self.lbl_status.setText("Archived");
+    else:
+      self.lbl_status.setText("Deleted");
     revisionList = QtGui.QStringListModel(self)
     strList = QtCore.QStringList();
     now = datetime.now()
