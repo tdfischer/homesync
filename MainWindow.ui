@@ -5,22 +5,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>749</width>
-    <height>626</height>
+    <width>754</width>
+    <height>564</height>
    </rect>
   </property>
   <property name="windowTitle" >
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget" >
-   <property name="geometry" >
-    <rect>
-     <x>0</x>
-     <y>27</y>
-     <width>749</width>
-     <height>575</height>
-    </rect>
-   </property>
    <layout class="QVBoxLayout" >
     <item>
      <widget class="QSplitter" name="splitter" >
@@ -39,7 +31,7 @@
             <widget class="QLineEdit" name="lineEdit" />
            </item>
            <item>
-            <widget class="QColumnView" name="fileView" />
+            <widget class="QListView" name="fileView" />
            </item>
           </layout>
          </widget>
@@ -47,17 +39,9 @@
         <item>
          <widget class="QTabWidget" name="tabWidget" >
           <property name="currentIndex" >
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab" >
-           <property name="geometry" >
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>493</width>
-             <height>240</height>
-            </rect>
-           </property>
            <attribute name="title" >
             <string>Status</string>
            </attribute>
@@ -97,7 +81,7 @@
                  </widget>
                 </item>
                 <item row="0" column="1" >
-                 <widget class="QLabel" name="label_6" >
+                 <widget class="QLabel" name="lbl_modstamp" >
                   <property name="text" >
                    <string>Today</string>
                   </property>
@@ -111,7 +95,7 @@
                  </widget>
                 </item>
                 <item row="1" column="1" >
-                 <widget class="QLabel" name="label_7" >
+                 <widget class="QLabel" name="lbl_archiveStamp" >
                   <property name="text" >
                    <string>Never</string>
                   </property>
@@ -125,7 +109,7 @@
                  </widget>
                 </item>
                 <item row="2" column="1" >
-                 <widget class="QLabel" name="label_8" >
+                 <widget class="QLabel" name="lbl_status" >
                   <property name="text" >
                    <string>Not in archive</string>
                   </property>
@@ -180,20 +164,12 @@
            </layout>
           </widget>
           <widget class="QWidget" name="tab_2" >
-           <property name="geometry" >
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>493</width>
-             <height>240</height>
-            </rect>
-           </property>
            <attribute name="title" >
             <string>History</string>
            </attribute>
            <layout class="QVBoxLayout" >
             <item>
-             <widget class="QColumnView" name="revisionView" />
+             <widget class="QListView" name="revisionView" />
             </item>
             <item>
              <widget class="QPushButton" name="btnRestore" >
@@ -210,15 +186,15 @@
       </widget>
       <widget class="QToolBox" name="toolBox" >
        <property name="currentIndex" >
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="page" >
         <property name="geometry" >
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>218</width>
-          <height>464</height>
+          <width>141</width>
+          <height>383</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -266,8 +242,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>175</width>
-          <height>156</height>
+          <width>187</width>
+          <height>383</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -276,12 +252,18 @@
         <layout class="QVBoxLayout" >
          <item>
           <widget class="QGroupBox" name="groupBox_2" >
+           <property name="whatsThis" >
+            <string>If enabled, HomeSync will create a revision for all your files at this given time</string>
+           </property>
            <property name="title" >
             <string>Daily Archive</string>
            </property>
            <layout class="QVBoxLayout" >
             <item>
              <widget class="QCheckBox" name="checkBox" >
+              <property name="whatsThis" >
+               <string/>
+              </property>
               <property name="text" >
                <string>Enable</string>
               </property>
@@ -322,6 +304,28 @@
           </widget>
          </item>
          <item>
+          <widget class="QGroupBox" name="groupBox_3" >
+           <property name="whatsThis" >
+            <string>If enabled, HomeSync will monitor your files for any changes and create revisions automatically.</string>
+           </property>
+           <property name="title" >
+            <string>Update Monitoring</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout" >
+            <item>
+             <widget class="QCheckBox" name="checkBox_2" >
+              <property name="whatsThis" >
+               <string/>
+              </property>
+              <property name="text" >
+               <string>Enable</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <spacer>
            <property name="orientation" >
             <enum>Qt::Vertical</enum>
@@ -341,8 +345,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>94</width>
-          <height>24</height>
+          <width>113</width>
+          <height>402</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -359,21 +363,12 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>749</width>
+     <width>754</width>
      <height>27</height>
     </rect>
    </property>
   </widget>
-  <widget class="QStatusBar" name="statusbar" >
-   <property name="geometry" >
-    <rect>
-     <x>0</x>
-     <y>602</y>
-     <width>749</width>
-     <height>24</height>
-    </rect>
-   </property>
-  </widget>
+  <widget class="QStatusBar" name="statusbar" />
   <action name="actionSettings" >
    <property name="text" >
     <string>Settings</string>
