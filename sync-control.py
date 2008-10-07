@@ -5,6 +5,7 @@ import os, sys
 from dbus.mainloop.qt import DBusQtMainLoop
 import dbus
 from datetime import datetime
+import HomeSync
 
 class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
   def __init__(self):
@@ -12,8 +13,8 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
     self.setupUi(self)
     #self.connect(self.actionBackup_Now,QtCore.SIGNAL('triggered()'), self.showSettings)
     bus = dbus.SessionBus()
-    serverObj = bus.get_object('net.wm161.HomeSync', '/Server');
-    self.server = dbus.Interface(serverObj, dbus_interface='net.wm161.HomeSync.Server')
+    serverObj = bus.get_object(HomeSync.DBUS_SERVER_NAME, HomeSync.DBUS_SERVER_PATH);
+    self.server = dbus.Interface(serverObj, dbus_interface=HomeSync.DBUS_SERVER_INTERFACE)
     self.statusList = QtGui.QStringListModel(self)
     self.statusList.setStringList(self.server.ListFiles(2))
     self.fileView.setModel(self.statusList)

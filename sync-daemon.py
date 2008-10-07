@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys
-from SyncDaemon import SyncDaemon
+from HomeSync.SyncDaemon import SyncDaemon
 
 from PyQt4 import QtCore
 from dbus.mainloop.qt import DBusQtMainLoop

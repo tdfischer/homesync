@@ -7,7 +7,9 @@ class SyncWatcher(QtCore.QFileSystemWatcher):
     self.addPath(path)
     qDir=QtCore.QDir(path)
     
-    for subdir in qDir.entryList(QtCore.QDir.Dirs | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.NoSymLinks):
+    subdirs = qDir.entryList(QtCore.QDir.Dirs | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.NoSymLinks)
+    for subdir in subdirs:
       self.addPath(path+"/"+subdir)
-    for subdir in qDir.entryList(QtCore.QDir.Dirs | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.NoSymLinks):
+    
+    for subdir in subdirs:
       self.add(path+"/"+subdir)
