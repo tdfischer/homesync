@@ -3,12 +3,28 @@ import sys
 import logging
 from HomeSync.SyncDaemon import SyncDaemon
 
-from PyQt4 import QtCore
-from dbus.mainloop.qt import DBusQtMainLoop
+try:
+  from dbus.mainloop.glib import DBusGMainLoop
+  import gobject
+  glibLoop = True
+except:
+  try:
+    from dbus.mainloop.qt import DBusQtMainLoop
+    from PyQt4 import QtCore
+    glibLoop = False
+  except:
+    print "No D-BUS main loops found."
+    sys.exit()
 
 if __name__ == "__main__":
-  logging.basicConfig(level=logging.INFO)
-  DBusQtMainLoop(set_as_default=True)
-  app = QtCore.QCoreApplication(sys.argv)
-  server = SyncDaemon()
-  sys.exit(app.exec_())
+  logging.basicConfig(level=logging.DEBUG)
+  if glibLoop:
+    DBusGMainLoop(set_as_default=True)
+    server = SyncDaemon()
+    loop = gobject.MainLoop()
+    loop.run()
+  else:
+    DBusQtMainLoop(set_as_default=True)
+    server = SyncDaemon()
+    loop = QtCore.QEventLoop()
+    sys.exit(loop._exec())

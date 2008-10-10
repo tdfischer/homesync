@@ -1,76 +1,32 @@
-import os
+import os, sys
 import logging
 import threading
 
 from SyncWatcher import SyncWatcher
-from GitInterface import *
 from AvahiBrowser import AvahiBrowser
 from DeviceWatcher import DeviceWatcher
+from SyncArchive import SyncArchive
+from Jobs import Job
 import dbus.service
-from PyQt4 import QtCore
 
-class JobQueue(threading.Thread, dbus.service.Object):
-  def __init__(self):
-    threading.Thread.__init__(self)
-    name = dbus.service.BusName("net.wm161.HomeSync", bus=dbus.SessionBus())
-    dbus.service.Object.__init__(self, object_path="/Jobs/Queue", conn=dbus.SessionBus(), bus_name=name)
-    self.log = logging.getLogger('SyncDaemon.JobQueue')
-    self.queueReady = threading.Condition()
-    self.queue = []
-    self.active = None
+class Crawler:
+  def __init__(self,archive):
+    self.archive = archive
+    self.dirs = []
   
-  def enqueue(self,*args, **kwargs):
-    self.queueReady.acquire()
-    if isinstance(args[0], Job):
-      self.queue.insert(0,args[0])
-    else:
-      self.queue.insert(0,Job(*args, **kwargs))
-    self.log.info("Queued job %s"%(self.queue[0]))
-    self.queueReady.notify()
-    self.queueReady.release()
-
-  def run(self):
-    while (True):
-      self.checkQueue()
-
-  def checkQueue(self):
-    self.queueReady.acquire()
-    while len(self.queue)==0:
-      self.queueReady.wait()
-    job = self.queue.pop()
-    self.queueReady.release()
-    self.log.info("Starting job %s",job)
-    job.start()
-    job.join()
-    self.log.info("Job exited: %s", job)
-
-class Job(threading.Thread, dbus.service.Object):
-  id = 0
-  def __init__(self,call,*args, **kwargs):
-    Job.id += 1
-    self.id = Job.id
-    name = dbus.service.BusName("net.wm161.HomeSync", bus=dbus.SessionBus())
-    dbus.service.Object.__init__(self, object_path="/Jobs/"+str(self.id), conn=dbus.SessionBus(), bus_name=name)
-    
-    threading.Thread.__init__(self)
-    self.call=call
-    self.args=args
-    self.kwargs=kwargs
-    
-    #if isinstance(call,instancemethod):
-    try:
-      self.name = call.im_func.__name__
-    except:
-      self.name = call.__name__
-
-  def __del__(self):
-    Job.id-=1
+  def start(self):
+    self.dive(self.archive.path)
   
-  def __str__(self):
-    return "#%i %s %s %s"%(self.id, self.name, self.args, self.kwargs)
-    
-  def run(self):
-    self.call(*self.args,**self.kwargs)
+  def dive(self,path):
+    files = os.listdir(path)
+    list = []
+    for f in files:
+      if os.path.isfile(os.path.join(path,f)) and not self.archive.isIgnored(os.path.join(path,f)):
+        list.append(os.path.join(path,f))
+      if os.path.isdir(os.path.join(path,f)):
+        self.archive.jobs.enqueue( Job(self.dive,args=(os.path.join(path, f),)) ).setPriority(-2)
+    if list != []:
+      self.archive.addFiles(*list).setPriority(-1)
 
 class SyncDaemon(dbus.service.Object):
   def __init__(self):
@@ -80,46 +36,27 @@ class SyncDaemon(dbus.service.Object):
     self.name = dbus.service.BusName("net.wm161.HomeSync",bus=dbus.SessionBus())
     dbus.service.Object.__init__(self, object_path="/Server", conn=dbus.SessionBus(), bus_name=self.name)
 
-    self.jobs = JobQueue()
-    self.jobs.start()
-
     home = os.environ["HOME"]
     os.chdir(home)
-    self.git = GitInterface(home+"/.home-sync/git",home)
-    if (os.path.exists(home+"/.home-sync") == False):
-      self.log.info("First-Run init")
-      os.mkdir(home+"/.home-sync")
+    self.archive = SyncArchive(home, backup=False)
+    self.archive.create()
 
-    if (os.path.exists(home+"/.home-sync/ignore") == False):
-      self.log.info("Missing ignore file. Creating defaults.")
-      defaultIgnores = [
-        "/.home-sync",
-        "/.local/share/Trash"
-      ]
-      ignoreFile = open(home+"/.home-sync/ignore","w")
-      ignoreFile.writelines(defaultIgnores)
-      ignoreFile.close()
-      
-    #Before we do the big initial import if at all needed, lets sneak away
     os.nice(5)
-    if (self.git.exists() == False):
-      self.log.info("Missing Git repo. Running git-init.")
-      self.jobs.enqueue(self.git.init)
-      self.jobs.enqueue(self.git.setConfig,"core.excludesfile",home+"/.home-sync/ignore")
-      self.jobs.enqueue(self.git.setConfig,"core.compression",-1)
-      self.log.info("Adding Documents to the repository.")
-      self.jobs.enqueue(self.git.add,home+"/Documents", self.FileAdded)
-      self.log.info("Committing to repository.")
-      self.jobs.enqueue(self.git.commit,"Initial Archive", callback=self.FileCommitted)
-    
-    self.log.info("Commiting changes since last run")
-    self.jobs.enqueue(self.git.commitAll,"HomeSync startup", callback=self.FileCommitted)
+    #if (self.git.exists() == False):
+      #self.log.info("Missing Git repo. Running git-init.")
+      #self.jobs.enqueue(self.git.init)
+      #self.jobs.enqueue(self.git.setConfig,"core.excludesfile",home+"/.home-sync/ignore")
+      #self.jobs.enqueue(self.git.setConfig,"core.compression",-1)
 
-    self.log.debug("Watching %s"%(home))
-    self.watcher = SyncWatcher()
-    self.watcher.add(home)
-    QtCore.QObject.connect(self.watcher,QtCore.SIGNAL("directoryChanged(QString)"),self.dirUpdate)
+    #self.log.debug("Watching %s"%(home))
+    #self.watcher = SyncWatcher()
+    #self.watcher.add(home)
+    #QtCore.QObject.connect(self.watcher,QtCore.SIGNAL("directoryChanged(QString)"),self.dirUpdate)
     self.Ready()
+    
+    self.log.info("Starting index crawler")
+    self.crawler = Crawler(self.archive)
+    self.crawler.start()
     
     self.avahi = AvahiBrowser()
     self.deviceWatcher = DeviceWatcher()
@@ -172,7 +109,7 @@ class SyncDaemon(dbus.service.Object):
   @dbus.service.method(dbus_interface='net.wm161.HomeSync.Server')
   def ExitDaemon(self):
     self.log.info("Exiting")
-    QtCore.QCoreApplication.exit()
+    sys.exit()
   
   @dbus.service.method(dbus_interface='net.wm161.HomeSync.Server', in_signature='s', out_signature="a(si)")
   def FileRevisions(self,path):

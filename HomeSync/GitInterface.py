@@ -40,12 +40,14 @@ class GitInterface:
     return os.path.exists(self.dir)
   
   def open(self,*args):
+    args = map(str,args)
     if self.bare:
-      self.log.debug("Running \"git --git-dir=%s --bare %s\""%(self.dir,args))
-      return Popen(("git","--git-dir=%s"%(self.dir),"--bare")+args, stdout=PIPE)
+      args = ["git","--git-dir=%s"%(self.dir),"--bare"]+args
     else:
-      self.log.debug("Running \"git --git-dir=%s --work-tree=%s %s\""%(self.dir,self.work,args))
-      return Popen(("git","--git-dir=%s"%(self.dir),"--work-tree=%s"%(self.work))+args, stdout=PIPE)
+      args = ["git","--git-dir=%s"%(self.dir),"--work-tree=%s"%(self.work)] + args
+    self.log.debug("Running %s"%(args))
+    #return Popen(args, stdout=PIPE)
+    return Popen(args)
   
   def init(self):
     with self.lock:
@@ -92,18 +94,15 @@ class GitInterface:
       list.append(file)
     git.wait()
     return list
-  
-  def add(self,file,callback=0):
-    if callback==0:
-      callback=lambda x:x
+
+  def add(self,*files):
     with self.lock:
-      git = self.open("add","-v","--",file)
-      while(True):
-        file = git.stdout.readline().strip().split()[1:]
-        if (file == []):
-          break
-        file = reduce(lambda x,y:"%s %s"%(x,y),file).strip("'")
-        callback(file)
+      git = self.open("add","-v","--",*files)
+      #while(True):
+        #file = git.stdout.readline().strip().split()[1:]
+        #if (file == []):
+          #break
+        #callback(''.join(file).strip("'"))
       git.wait()
   
   def update(self,path):
@@ -111,33 +110,27 @@ class GitInterface:
       git = self.open("add","-u","--",path)
       git.wait()
   
-  def commitAll(self, message, callback=0):
-    if callback == 0:
-      callback=lambda x:x
+  def commitAll(self, message):
     self.log.debug("Committing all changes: %s",message)
     with self.lock:
       git = self.open("commit","-a","-m",message)
-      while (True):
-        line=git.stdout.readline().strip().split()[5:]
-        if line == []:
-          break
-        file=reduce(lambda x,y:"%s %s"%(x,y),line)
-        callback(file)
+      #while (True):
+        #line=git.stdout.readline().strip().split()[5:]
+        #if line == []:
+          #break
+        #callback(''.join(line))
       git.wait()
       self.log.debug("Commited.")
   
-  def commit(self, message, path='', callback=0):
-    if callback==0:
-      callback=lambda x:x
+  def commit(self, message, *files):
     self.log.debug("Commiting %s...",message)
     with self.lock:
-      git = self.open("commit","-m",message,"--",path)
-      while (True):
-        line=git.stdout.readline().strip().split()[5:]
-        if line == []:
-          break
-        file=reduce(lambda x,y:"%s %s"%(x,y),line.split()[5:])
-        callback(file)
+      git = self.open("commit","-m",message,"--",*files)
+      #while (True):
+        #line=git.stdout.readline().strip().split()[5:]
+        #if line == []:
+          #break
+        #callback(''.join(line.split()[5:]))
       self.log.debug("Commited.")
 
   def compact(self):
