@@ -1,12 +1,23 @@
+# -*- coding: utf-8 -*-
 import threading
 import logging
+import time
+
+class JobException(Exception):
+  def __init__(self, status=-1, message=""):
+    self.status = status
+    self.message = message
+    self.job = None
+  
+  def __str__(self):
+    return "%s exited with non-zero status of %s (%s)" % (self.job, self.status, self.message)
 
 class JobQueue(threading.Thread):
   def __init__(self):
     threading.Thread.__init__(self)
     self.log = logging.getLogger('JobQueue')
     self.queue = []
-    self.queueReady = threading.Condition()
+    self.queueReady = threading.Condition(threading.Lock())
     self.running = threading.Event()
     self.running.set()
     self.active = None
@@ -16,8 +27,8 @@ class JobQueue(threading.Thread):
 
     self.queue.insert(0,job)
     self.queue = sorted(self.queue)
-    self.log.debug("Queued job %s"%(job))
-    self.log.debug("Arguments: %s %s",job.args, job.kwargs)
+    #self.log.debug("Queued job %s", repr(job))
+    #self.log.debug("Arguments: %s %s", job.args, job.kwargs)
     self.queueReady.notify()
     self.queueReady.release()
     self.NewJob(job.id)
@@ -31,15 +42,18 @@ class JobQueue(threading.Thread):
     self.running.wait()
     self.queueReady.acquire()
     while self.haveJobs() == False:
+      self.log.debug("Waiting for a new job")
       self.queueReady.wait()
     self.queue = sorted(self.queue)
-    self.active= self.queue.pop()
+    self.active = self.queue.pop()
     self.queueReady.release()
-    self.log.info("Starting job %s",self.active)
-    self.log.debug("Arguments: %s %s",self.active.args, self.active.kwargs)
+    self.log.info("Starting job %s",repr(self.active))
     self.active.start()
     self.active.join()
-    self.log.info("Job complete: %s", self.active)
+    self.log.info("Job complete: %s", repr(self.active))
+    if (self.active.exception):
+      self.log.error("Exception thrown in job. Passing up.")
+      raise self.active.exception
     self.JobComplete(self.active.id)
     del self.active
     self.active = None
@@ -65,10 +79,11 @@ class JobQueue(threading.Thread):
 
 class Job(threading.Thread):
   id = 0
-  def __init__(self,call, args=[], kwargs={}):
+  def __init__(self, call, args=[], kwargs={}):
     Job.id += 1
     self.prio = 0
     self.id = Job.id
+    self.exception = None
     
     threading.Thread.__init__(self)
     self.call=call
@@ -94,19 +109,31 @@ class Job(threading.Thread):
     Job.id-=1
   
   def __str__(self):
-    return "#%i (%i) %s"%(self.id, self.prio, self.name)
+    return self.name
+  
+  def __repr__(self):
+    if (self.exception == None):
+      status = "OK"
+    else:
+      status = "EXCEPTION"
+    return "<ID:%i Priority:%i Status:%s Name:%s>"%(self.id, self.prio, status, self.name)
     
   def run(self):
-    self.call(*self.args,**self.kwargs)
+    try:
+      self.call(*self.args,**self.kwargs)
+    except JobException, e:
+      e.job = self
+      self.exception = e
+      raise e
     
 class JobGroup(Job, JobQueue):
   def __init__(self):
     Job.__init__(self, self.runJobs)
     JobQueue.__init__(self)
-    self.name=''
+    self.name="JobGroup"
 
-  def __str__(self):
-    return Job.__str__(self)+str(map(str,self.queue))
+  def __repr__(self):
+    return Job.__repr__(self)+str(map(str,self.queue))
   
   def runJobs(self):
     while self.haveJobs():

@@ -1,8 +1,10 @@
-from GitInterface import GitInterface
+# -*- coding: utf-8 -*-
+from GitInterface import GitInterface, GitCallback
 from Jobs import JobQueue, Job, JobGroup
 import logging
 import os
 from fnmatch import fnmatch
+#from git import *
 
 DEFAULT_IGNORES=[
   "/.home-sync",
@@ -21,9 +23,12 @@ DEFAULT_IGNORES=[
 ]
 
 class SyncArchive:
-  def __init__(self, path, backup=False):
+  def __init__(self, path, backup=False, gitHandler=None):
     self.backup = backup
     self.path = path
+    if gitHandler == None:
+      gitHandler=GitCallback()
+    self.handler = gitHandler
     
     if backup:
       bare = True
@@ -49,7 +54,8 @@ class SyncArchive:
     file = file.lstrip(self.path)
     for pattern in self.ignoreList():
       if fnmatch(file, "*/"+pattern):
-        return true
+        return True
+    return False
   
   def create(self):
     if self.backup:
@@ -81,10 +87,10 @@ class SyncArchive:
   def addFiles(self, *files):
     self.commits+=1
     j = JobGroup()
-    j.enqueue( Job(self.git.add, args=files) )
-    j.enqueue( Job(self.git.commit, args=("%s added"%(files),)+files) )
+    j.enqueue( Job(self.git.addToIndex, args=files) )
+    j.enqueue( Job(self.git.commitIndex, args=("%i files added"%(len(files)),)) )
     if self.commits>100:
-      j.enqueue( Job(self.git.compact) ) #Make sure we compact after we commit and add
+      #j.enqueue( Job(self.git.compact) ) #Make sure we compact after we commit and add
       self.commits=0
     self.jobs.enqueue(j)
     return j
